@@ -1,0 +1,78 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+    "name": "chart_segments",
+    "position": {
+        "x": 640,
+        "y": 460,
+        "z": 1,
+        "width": 560,
+        "height": 240,
+        "tabOrder": 8
+    },
+    "visual": {
+        "visualType": "pieChart",
+        "query": {
+            "queryState": {
+                "Category": {
+                    "projections": [
+                        {
+                            "field": {
+                                "Column": {
+                                    "Expression": {
+                                        "SourceRef": {
+                                            "Entity": "Customer_Segments"
+                                        }
+                                    },
+                                    "Property": "Segment"
+                                }
+                            }
+                        }
+                    ]
+                },
+                "Y": {
+                    "projections": [
+                        {
+                            "field": {
+                                "Aggregation": {
+                                    "Expression": {
+                                        "Column": {
+                                            "Expression": {
+                                                "SourceRef": {
+                                                    "Entity": "Customer_Segments"
+                                                }
+                                            },
+                                            "Property": "Customer ID"
+                                        }
+                                    },
+                                    "Function": 5
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "visualContainerObjects": {
+            "title": [
+                {
+                    "properties": {
+                        "text": {
+                            "expr": {
+                                "Literal": {
+                                    "Value": "'Customer Segments'"
+                                }
+                            }
+                        },
+                        "show": {
+                            "expr": {
+                                "Literal": {
+                                    "Value": "true"
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}

@@ -1,0 +1,73 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+    "name": "chart_monthly_trend",
+    "position": {
+        "x": 20,
+        "y": 160,
+        "z": 1,
+        "width": 600,
+        "height": 280,
+        "tabOrder": 5
+    },
+    "visual": {
+        "visualType": "lineChart",
+        "query": {
+            "queryState": {
+                "Category": {
+                    "projections": [
+                        {
+                            "field": {
+                                "Column": {
+                                    "Expression": {
+                                        "SourceRef": {
+                                            "Entity": "Date"
+                                        }
+                                    },
+                                    "Property": "YearMonth"
+                                }
+                            }
+                        }
+                    ]
+                },
+                "Y": {
+                    "projections": [
+                        {
+                            "field": {
+                                "Measure": {
+                                    "Expression": {
+                                        "SourceRef": {
+                                            "Entity": "Candy_Sales"
+                                        }
+                                    },
+                                    "Property": "Total Sales"
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "visualContainerObjects": {
+            "title": [
+                {
+                    "properties": {
+                        "text": {
+                            "expr": {
+                                "Literal": {
+                                    "Value": "'Monthly Sales Trend'"
+                                }
+                            }
+                        },
+                        "show": {
+                            "expr": {
+                                "Literal": {
+                                    "Value": "true"
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}

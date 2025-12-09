@@ -1,0 +1,73 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+    "name": "chart_top_products",
+    "position": {
+        "x": 20,
+        "y": 460,
+        "z": 1,
+        "width": 600,
+        "height": 240,
+        "tabOrder": 7
+    },
+    "visual": {
+        "visualType": "barChart",
+        "query": {
+            "queryState": {
+                "Category": {
+                    "projections": [
+                        {
+                            "field": {
+                                "Column": {
+                                    "Expression": {
+                                        "SourceRef": {
+                                            "Entity": "Candy_Products"
+                                        }
+                                    },
+                                    "Property": "Product Name"
+                                }
+                            }
+                        }
+                    ]
+                },
+                "Y": {
+                    "projections": [
+                        {
+                            "field": {
+                                "Measure": {
+                                    "Expression": {
+                                        "SourceRef": {
+                                            "Entity": "Candy_Sales"
+                                        }
+                                    },
+                                    "Property": "Total Sales"
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "visualContainerObjects": {
+            "title": [
+                {
+                    "properties": {
+                        "text": {
+                            "expr": {
+                                "Literal": {
+                                    "Value": "'Top Products by Sales'"
+                                }
+                            }
+                        },
+                        "show": {
+                            "expr": {
+                                "Literal": {
+                                    "Value": "true"
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}

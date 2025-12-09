@@ -1,0 +1,18 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/1.0.0/schema.json",
+    "name": "executive_summary",
+    "displayName": "Executive Summary",
+    "displayOption": "FitToPage",
+    "height": 720,
+    "width": 1280,
+    "visualsOrder": [
+        "card_total_sales",
+        "card_gross_margin",
+        "card_orders",
+        "card_customers",
+        "chart_monthly_trend",
+        "chart_division_donut",
+        "chart_top_products",
+        "chart_segments"
+    ]
+}
