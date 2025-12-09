@@ -1,12 +1,12 @@
 # Implementation Plan v1 - Power BI Candy Distributor Data Model
 
-> **Version**: 1.1  
+> **Version**: 1.2  
 > **Date**: 2025-12-10  
-> **Status**: Initial Data Loading Completed
+> **Status**: Phase 1-3 Completed, Phase 5 Setup Complete
 
 ## 🎯 Objective
 
-Build a comprehensive Power BI semantic model for **Candy Distributor Sales Analysis** by loading CSV data sources and establishing a proper data model with relationships, measures, calculated columns, and machine learning predictions.
+Build a comprehensive Power BI semantic model for **Candy Distributor Sales Analysis** with data modeling, advanced measures, time intelligence, and machine learning predictions.
 
 ---
 
@@ -15,47 +15,32 @@ Build a comprehensive Power BI semantic model for **Candy Distributor Sales Anal
 | Phase | Description | Status |
 |-------|-------------|--------|
 | Phase 1 | Data Source Loading | ✅ Completed |
-| Phase 2 | Data Model Design | 🔲 Planned |
-| Phase 3 | Measures & Calculations | 🔲 Planned |
+| Phase 2 | Data Model Design | ✅ Completed |
+| Phase 3 | Measures & Calculations | ✅ Completed |
 | Phase 4 | Visualization | 🔲 Planned |
-| Phase 5 | Machine Learning | 🔲 Planned |
+| Phase 5 | Machine Learning | ✅ Setup Complete |
 | Phase 6 | Deployment & Documentation | 🔲 Planned |
 
 ---
 
-## 📊 Phase 1: Data Source Loading (Completed)
+## 📊 Phase 1: Data Source Loading ✅
 
 ### Data Sources
 
 | Source File | Table Name | Description | Status |
 |------------|------------|-------------|--------|
-| `Candy_Factories.csv` | Candy_Factories | Factory locations | ✅ Loaded |
-| `Candy_Products.csv` | Candy_Products | Product catalog | ✅ Loaded |
-| `Candy_Sales.csv` | Candy_Sales | Transaction data | ✅ Loaded |
-| `Candy_Targets.csv` | Candy_Targets | Sales targets | ✅ Loaded |
-| `uszips.csv` | USZips | ZIP code reference | ✅ Loaded |
-
-### Power Query (M) Loading Pattern
-
-Each table was loaded using the following M expression pattern:
-
-```m
-let
-    Source = Csv.Document(
-        File.Contents("C:\path\to\DataSource\filename.csv"),
-        [Delimiter=",", Columns=N, Encoding=65001, QuoteStyle=QuoteStyle.None]
-    ),
-    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
-    ChangedTypes = Table.TransformColumnTypes(PromotedHeaders, {...})
-in
-    ChangedTypes
-```
+| `Candy_Factories.csv` | Candy_Factories | Factory locations (3 cols) | ✅ Loaded |
+| `Candy_Products.csv` | Candy_Products | Product catalog (6 cols) | ✅ Loaded |
+| `Candy_Sales.csv` | Candy_Sales | Transaction data (18 cols) | ✅ Loaded |
+| `Candy_Targets.csv` | Candy_Targets | Sales targets (2 cols) | ✅ Loaded |
+| `uszips.csv` | Geography | US ZIP codes (10 cols) | ✅ Loaded |
+| (Generated) | Date | Date dimension (7 cols) | ✅ Created |
 
 ---
 
-## 📐 Phase 2: Data Model Design
+## 📐 Phase 2: Data Model Design ✅
 
-### Proposed Relationships
+### Star Schema
 
 ```
                     ┌──────────────┐
@@ -64,236 +49,157 @@ in
                            │ 1:M
                            ▼
 ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
-│Candy_Products │◄───│ Candy_Sales  │───►│   USZips     │
+│Candy_Products │◄───│ Candy_Sales  │───►│  Geography   │
 └──────────────┘ 1:M└──────────────┘ M:1└──────────────┘
                            │
-                           ▼ M:1
-                    ┌──────────────┐
-                    │Candy_Targets │
-                    └──────────────┘
+           ┌───────────────┼───────────────┐
+           ▼ M:1           ▼ M:1           
+    ┌──────────────┐ ┌──────────────┐
+    │Candy_Targets │ │    Date      │
+    └──────────────┘ └──────────────┘
 ```
 
-### Key Relationships to Create
+### Relationships (5 Active)
 
-| From Table | From Column | To Table | To Column | Cardinality |
-|------------|-------------|----------|-----------|-------------|
-| Candy_Sales | ProductID | Candy_Products | ProductID | M:1 |
-| Candy_Sales | FactoryID | Candy_Factories | FactoryID | M:1 |
-| Candy_Sales | ZipCode | USZips | zip | M:1 |
-
-### Date Table
-
-- [ ] Create Date dimension table using DAX or Power Query
-- [ ] Mark as Date table for time intelligence
+| From Table | From Column | To Table | To Column |
+|------------|-------------|----------|-----------|
+| Candy_Sales | Product ID | Candy_Products | Product ID |
+| Candy_Products | Factory | Candy_Factories | Factory |
+| Candy_Sales | Division | Candy_Targets | Division |
+| Candy_Sales | Order Date | Date | Date |
+| Candy_Sales | Postal Code | Geography | zip |
 
 ---
 
-## 📈 Phase 3: Measures & Calculations
+## 📈 Phase 3: Measures & Calculations ✅
 
-### Core Measures (Proposed)
+### Core Measures (9 Original)
 
-```dax
-// Total Sales Amount
-Total Sales = SUM(Candy_Sales[SalesAmount])
+| Measure | Formula | Format |
+|---------|---------|--------|
+| Total Sales | `SUM(Candy_Sales[Sales])` | $#,0.00 |
+| Total Cost | `SUM(Candy_Sales[Cost])` | $#,0.00 |
+| Total Gross Profit | `SUM(Candy_Sales[Gross Profit])` | $#,0.00 |
+| Gross Margin % | `DIVIDE([Total Gross Profit], [Total Sales])` | 0.0% |
+| Total Units | `SUM(Candy_Sales[Units])` | #,0 |
+| Order Count | `DISTINCTCOUNT(Candy_Sales[Order ID])` | #,0 |
+| Customer Count | `DISTINCTCOUNT(Candy_Sales[Customer ID])` | #,0 |
+| Avg Sales per Order | `DIVIDE([Total Sales], [Order Count])` | $#,0.00 |
+| Target Achievement % | `DIVIDE([Total Sales], SUM(Candy_Targets[TargetAmount]))` | 0.0% |
 
-// Total Units Sold
-Total Units = SUM(Candy_Sales[Quantity])
+### Time Intelligence Measures (6 New)
 
-// Average Order Value
-Avg Order Value = DIVIDE([Total Sales], DISTINCTCOUNT(Candy_Sales[OrderID]))
+| Measure | Description | Folder |
+|---------|-------------|--------|
+| Sales YoY % | Year-over-Year Growth | Time Intelligence |
+| Sales MoM % | Month-over-Month Growth | Time Intelligence |
+| Sales YTD | Year-to-Date Sales | Time Intelligence |
+| Sales Prior Year | Same Period Last Year | Time Intelligence |
+| Sales 3M Avg | 3-Month Rolling Average | Time Intelligence |
 
-// Sales vs Target %
-Sales Achievement % = DIVIDE([Total Sales], SUM(Candy_Targets[TargetAmount]))
-```
+### Operational Measures (6 New)
 
-### Time Intelligence (Proposed)
+| Measure | Description |
+|---------|-------------|
+| Avg Days to Ship | Average shipping time |
+| Sales per Customer | Revenue per customer |
+| Profit per Unit | Profit per unit sold |
+| Revenue per Order | Average order value |
+| Units per Order | Average units per order |
+| Products Sold | Distinct products sold |
 
-- [ ] Date Table generation
-- [ ] YTD, MTD, QTD calculations
-- [ ] Year-over-Year comparisons
-- [ ] Moving averages
-
-### Calculation Groups (Optional)
-
-- [ ] Time Intelligence calculation group
-- [ ] Currency conversion group (if applicable)
+**Total Measures: 21**
 
 ---
 
-## 🎨 Phase 4: Visualization
+## 🎨 Phase 4: Visualization (Planned)
 
 ### Dashboard Concepts
 
-1. **Sales Overview Dashboard**
-   - Total Sales KPI
-   - Sales by Product Category
-   - Sales by Region (Map)
-   - Monthly Trend
+1. **Executive Summary**
+   - KPI Cards: Sales, Profit, Margin, YoY Growth
+   - Trend Line: Monthly Sales with Forecast
+   - Top Products & Regions
 
-2. **Product Performance**
-   - Top/Bottom Products
-   - Category Analysis
-   - Product Mix
+2. **Sales Analysis**
+   - Sales by Division/Product
+   - Geographic Heatmap
+   - Time Intelligence Comparisons
 
-3. **Geographic Analysis**
-   - Sales by State/Region
-   - Factory Coverage Map
-   - Distribution Network
+3. **Customer Insights**
+   - Customer Segments (from ML)
+   - RFM Analysis Visualization
+   - Customer Lifetime Value
 
-4. **Predictive Insights** (ML Integration)
-   - Sales Forecast
-   - Anomaly Detection Alerts
-   - Customer Segmentation View
+4. **Predictive Dashboard**
+   - Sales Forecast Chart
+   - Confidence Intervals
+   - Anomaly Alerts
 
 ---
 
-## 🤖 Phase 5: Machine Learning
+## 🤖 Phase 5: Machine Learning ✅
 
 ### Environment Setup
 
-| Tool | Purpose |
-|------|---------|
-| **Python 3.11+** | Programming language |
-| **Astral UV** | Package management (fast, modern alternative to pip) |
-| **Jupyter Notebooks** | Interactive development |
+| Component | Status |
+|-----------|--------|
+| Astral UV v0.9.16 | ✅ Installed |
+| Python 3.11.14 | ✅ Installed |
+| Dependencies (141 packages) | ✅ Synced |
 
-### Project Structure
+### ML Notebooks Created
 
-```
-PBI_MCP_DEMO/
-├── ml/
-│   ├── pyproject.toml          # UV project configuration
-│   ├── .python-version         # Python version lock
-│   ├── notebooks/
-│   │   ├── 01_eda.ipynb        # Exploratory Data Analysis
-│   │   ├── 02_forecasting.ipynb
-│   │   └── 03_segmentation.ipynb
-│   ├── src/
-│   │   ├── __init__.py
-│   │   ├── data_loader.py
-│   │   ├── models/
-│   │   │   ├── forecasting.py
-│   │   │   ├── clustering.py
-│   │   │   └── anomaly.py
-│   │   └── utils/
-│   └── outputs/
-│       └── predictions/
-```
+| Notebook | Purpose | Status |
+|----------|---------|--------|
+| `01_eda.ipynb` | Exploratory Data Analysis | ✅ Created |
+| `02_forecasting.ipynb` | Sales Forecasting (RF, GB) | ✅ Created |
+| `03_segmentation.ipynb` | Customer Segmentation (K-Means) | ✅ Created |
+
+### Key Findings (from EDA)
+
+| Metric | Value |
+|--------|-------|
+| Total Revenue | $141,784 |
+| Gross Margin | 66% |
+| YoY Growth 2023 | +27% |
+| YoY Growth 2024 | +27% |
+| Top Division | Chocolate (93% of revenue) |
+| Top State | California (20% of sales) |
 
 ### ML Use Cases
 
 #### 5.1 Sales Forecasting
-- **Objective**: Predict future sales by product/region
-- **Algorithms**: Prophet, ARIMA, XGBoost
-- **Output**: CSV for Power BI import or DirectQuery via Python script
+- **Models**: Random Forest, Gradient Boosting
+- **Features**: Lag variables, seasonality, moving averages
+- **Output**: `outputs/predictions/sales_forecast.csv`
 
 #### 5.2 Customer Segmentation
-- **Objective**: Cluster customers by purchasing behavior
-- **Algorithms**: K-Means, DBSCAN, Hierarchical Clustering
-- **Output**: Customer segment labels
-
-#### 5.3 Anomaly Detection
-- **Objective**: Identify unusual sales patterns
-- **Algorithms**: Isolation Forest, DBSCAN, Z-Score
-- **Output**: Anomaly flags for sales transactions
-
-#### 5.4 Product Recommendation (Optional)
-- **Objective**: Suggest product bundles
-- **Algorithms**: Association Rules, Collaborative Filtering
-
-### Python Dependencies (UV)
-
-```toml
-[project]
-name = "pbi-mcp-demo-ml"
-version = "0.1.0"
-requires-python = ">=3.11"
-
-[project.dependencies]
-pandas = ">=2.0"
-numpy = ">=1.24"
-scikit-learn = ">=1.3"
-prophet = ">=1.1"
-xgboost = ">=2.0"
-matplotlib = ">=3.7"
-seaborn = ">=0.12"
-jupyter = ">=1.0"
-plotly = ">=5.15"
-```
-
-### Integration with Power BI
-
-| Method | Description |
-|--------|-------------|
-| **CSV Export** | Export predictions to CSV, load via Power Query |
-| **Python Visual** | Use Python script visual in Power BI |
-| **Dataflow** | Power BI Dataflows with Python |
-| **REST API** | Deploy model as API, call from Power BI |
+- **Algorithm**: K-Means Clustering
+- **Method**: RFM Analysis (Recency, Frequency, Monetary)
+- **Segments**: Champions, Loyal, Potential, At Risk
+- **Output**: `outputs/predictions/customer_segments.csv`
 
 ---
 
-## 🚀 Phase 6: Deployment & Documentation
-
-### Deployment Tasks
+## 🚀 Phase 6: Deployment & Documentation (Planned)
 
 - [ ] Publish to Power BI Service
 - [ ] Configure scheduled refresh
-- [ ] Set up workspace and permissions
-- [ ] Create Power BI App (optional)
-
-### Documentation Tasks
-
-- [ ] Update README with final project overview
+- [ ] Create Power BI App
 - [ ] Document data dictionary
-- [ ] Create user guide for dashboards
-- [ ] Document ML model methodology
-
-### Version Control
-
-- [ ] Maintain TMDL files in Git
-- [ ] Version ML models and outputs
-- [ ] Document change history
-
-### CI/CD (Future Enhancement)
-
-- [ ] GitHub Actions for automated testing
-- [ ] Automated deployment to Power BI Service
-- [ ] Model retraining pipeline
-
----
-
-## 📝 Notes
-
-### Technical Decisions
-
-1. **File Path Handling**: Using absolute paths for CSV loading. Consider parameterizing for portability.
-2. **Encoding**: Using UTF-8 (65001) for all CSV files
-3. **TMDL Format**: Using TMDL for semantic model definition for better version control
-4. **Package Manager**: Using Astral UV for Python (faster than pip, modern tooling)
-
-### Known Issues
-
-- None currently identified
-
-### Future Enhancements
-
-- [ ] Add incremental refresh for large tables
-- [ ] Create RLS (Row-Level Security) roles
-- [ ] Add documentation annotations
-- [ ] Create calculation groups for time intelligence
-- [ ] Real-time ML model serving with MLflow
+- [ ] Create user guide
 
 ---
 
 ## 📚 References
 
-- [Power BI MCP Documentation](https://github.com/PowerBI-MCP)
+- [Power BI MCP](https://github.com/PowerBI-MCP)
 - [TMDL Reference](https://learn.microsoft.com/en-us/analysis-services/tmdl/tmdl-overview)
 - [DAX Reference](https://dax.guide/)
-- [Astral UV Documentation](https://docs.astral.sh/uv/)
-- [Prophet Forecasting](https://facebook.github.io/prophet/)
+- [Astral UV](https://docs.astral.sh/uv/)
 - [Scikit-learn](https://scikit-learn.org/)
 
 ---
 
-*This document serves as a living reference for the project implementation.*
+*Last Updated: 2025-12-10*
