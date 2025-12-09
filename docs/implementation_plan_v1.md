@@ -1,8 +1,8 @@
 # Implementation Plan v1 - Power BI Candy Distributor Data Model
 
-> **Version**: 1.2  
+> **Version**: 1.3  
 > **Date**: 2025-12-10  
-> **Status**: Phase 1-3 Completed, Phase 5 Setup Complete
+> **Status**: Phase 1-5 Completed ✅
 
 ## 🎯 Objective
 
@@ -17,168 +17,145 @@ Build a comprehensive Power BI semantic model for **Candy Distributor Sales Anal
 | Phase 1 | Data Source Loading | ✅ Completed |
 | Phase 2 | Data Model Design | ✅ Completed |
 | Phase 3 | Measures & Calculations | ✅ Completed |
-| Phase 4 | Visualization | 🔲 Planned |
-| Phase 5 | Machine Learning | ✅ Setup Complete |
+| Phase 4 | ML Integration | ✅ Completed |
+| Phase 5 | Machine Learning | ✅ Completed |
 | Phase 6 | Deployment & Documentation | 🔲 Planned |
 
 ---
 
 ## 📊 Phase 1: Data Source Loading ✅
 
-### Data Sources
+### Data Sources (6 Tables)
 
-| Source File | Table Name | Description | Status |
-|------------|------------|-------------|--------|
-| `Candy_Factories.csv` | Candy_Factories | Factory locations (3 cols) | ✅ Loaded |
-| `Candy_Products.csv` | Candy_Products | Product catalog (6 cols) | ✅ Loaded |
-| `Candy_Sales.csv` | Candy_Sales | Transaction data (18 cols) | ✅ Loaded |
-| `Candy_Targets.csv` | Candy_Targets | Sales targets (2 cols) | ✅ Loaded |
-| `uszips.csv` | Geography | US ZIP codes (10 cols) | ✅ Loaded |
-| (Generated) | Date | Date dimension (7 cols) | ✅ Created |
+| Source File | Table Name | Records | Status |
+|------------|------------|---------|--------|
+| `Candy_Factories.csv` | Candy_Factories | 4 | ✅ |
+| `Candy_Products.csv` | Candy_Products | 35 | ✅ |
+| `Candy_Sales.csv` | Candy_Sales | 6,374 | ✅ |
+| `Candy_Targets.csv` | Candy_Targets | 3 | ✅ |
+| `uszips.csv` | Geography | 33,787 | ✅ |
+| (Generated) | Date | 1,096 | ✅ |
 
 ---
 
 ## 📐 Phase 2: Data Model Design ✅
 
-### Star Schema
+### Star Schema (8 Tables, 6 Relationships)
 
 ```
                     ┌──────────────┐
                     │Candy_Factories│
                     └──────┬───────┘
-                           │ 1:M
-                           ▼
+                           │
 ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
 │Candy_Products │◄───│ Candy_Sales  │───►│  Geography   │
-└──────────────┘ 1:M└──────────────┘ M:1└──────────────┘
+└──────────────┘    └──────────────┘    └──────────────┘
                            │
            ┌───────────────┼───────────────┐
-           ▼ M:1           ▼ M:1           
-    ┌──────────────┐ ┌──────────────┐
-    │Candy_Targets │ │    Date      │
-    └──────────────┘ └──────────────┘
+           ▼               ▼               ▼
+    ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+    │Candy_Targets │ │    Date      │ │Customer_Seg. │
+    └──────────────┘ └──────────────┘ └──────────────┘
+                           
+    ┌──────────────┐
+    │Sales_Forecast│ (Standalone ML Table)
+    └──────────────┘
 ```
-
-### Relationships (5 Active)
-
-| From Table | From Column | To Table | To Column |
-|------------|-------------|----------|-----------|
-| Candy_Sales | Product ID | Candy_Products | Product ID |
-| Candy_Products | Factory | Candy_Factories | Factory |
-| Candy_Sales | Division | Candy_Targets | Division |
-| Candy_Sales | Order Date | Date | Date |
-| Candy_Sales | Postal Code | Geography | zip |
 
 ---
 
 ## 📈 Phase 3: Measures & Calculations ✅
 
-### Core Measures (9 Original)
+### Total: 29 Measures
 
-| Measure | Formula | Format |
-|---------|---------|--------|
-| Total Sales | `SUM(Candy_Sales[Sales])` | $#,0.00 |
-| Total Cost | `SUM(Candy_Sales[Cost])` | $#,0.00 |
-| Total Gross Profit | `SUM(Candy_Sales[Gross Profit])` | $#,0.00 |
-| Gross Margin % | `DIVIDE([Total Gross Profit], [Total Sales])` | 0.0% |
-| Total Units | `SUM(Candy_Sales[Units])` | #,0 |
-| Order Count | `DISTINCTCOUNT(Candy_Sales[Order ID])` | #,0 |
-| Customer Count | `DISTINCTCOUNT(Candy_Sales[Customer ID])` | #,0 |
-| Avg Sales per Order | `DIVIDE([Total Sales], [Order Count])` | $#,0.00 |
-| Target Achievement % | `DIVIDE([Total Sales], SUM(Candy_Targets[TargetAmount]))` | 0.0% |
+#### Core Measures (9)
+| Measure | Formula |
+|---------|---------|
+| Total Sales | `SUM(Candy_Sales[Sales])` |
+| Total Cost | `SUM(Candy_Sales[Cost])` |
+| Total Gross Profit | `SUM(Candy_Sales[Gross Profit])` |
+| Gross Margin % | `DIVIDE([Total Gross Profit], [Total Sales])` |
+| Total Units | `SUM(Candy_Sales[Units])` |
+| Order Count | `DISTINCTCOUNT(Candy_Sales[Order ID])` |
+| Customer Count | `DISTINCTCOUNT(Candy_Sales[Customer ID])` |
+| Avg Sales per Order | `DIVIDE([Total Sales], [Order Count])` |
+| Target Achievement % | `DIVIDE([Total Sales], SUM(Candy_Targets[TargetAmount]))` |
 
-### Time Intelligence Measures (6 New)
+#### Time Intelligence (5)
+| Measure | Folder |
+|---------|--------|
+| Sales YoY % | Time Intelligence |
+| Sales MoM % | Time Intelligence |
+| Sales YTD | Time Intelligence |
+| Sales Prior Year | Time Intelligence |
+| Sales 3M Avg | Time Intelligence |
 
-| Measure | Description | Folder |
-|---------|-------------|--------|
-| Sales YoY % | Year-over-Year Growth | Time Intelligence |
-| Sales MoM % | Month-over-Month Growth | Time Intelligence |
-| Sales YTD | Year-to-Date Sales | Time Intelligence |
-| Sales Prior Year | Same Period Last Year | Time Intelligence |
-| Sales 3M Avg | 3-Month Rolling Average | Time Intelligence |
-
-### Operational Measures (6 New)
-
+#### Operational (7)
 | Measure | Description |
 |---------|-------------|
-| Avg Days to Ship | Average shipping time |
+| Avg Days to Ship | Avg shipping time |
 | Sales per Customer | Revenue per customer |
 | Profit per Unit | Profit per unit sold |
-| Revenue per Order | Average order value |
-| Units per Order | Average units per order |
-| Products Sold | Distinct products sold |
+| Revenue per Order | Avg order value |
+| Units per Order | Avg units per order |
+| Products Sold | Distinct products |
+| Avg Location Population | Avg geo population |
 
-**Total Measures: 21**
-
----
-
-## 🎨 Phase 4: Visualization (Planned)
-
-### Dashboard Concepts
-
-1. **Executive Summary**
-   - KPI Cards: Sales, Profit, Margin, YoY Growth
-   - Trend Line: Monthly Sales with Forecast
-   - Top Products & Regions
-
-2. **Sales Analysis**
-   - Sales by Division/Product
-   - Geographic Heatmap
-   - Time Intelligence Comparisons
-
-3. **Customer Insights**
-   - Customer Segments (from ML)
-   - RFM Analysis Visualization
-   - Customer Lifetime Value
-
-4. **Predictive Dashboard**
-   - Sales Forecast Chart
-   - Confidence Intervals
-   - Anomaly Alerts
+#### ML Predictions (8)
+| Measure | Source |
+|---------|--------|
+| Forecasted Sales | Sales_Forecast |
+| Champion Customers | Customer_Segments |
+| At Risk Customers | Customer_Segments |
+| Loyal Customers | Customer_Segments |
+| Total Segmented Customers | Customer_Segments |
+| Avg Customer Value | Customer_Segments |
+| Avg Customer Recency | Customer_Segments |
+| High Value Cluster Sales | Customer_Segments |
 
 ---
 
-## 🤖 Phase 5: Machine Learning ✅
+## 🤖 Phase 4 & 5: Machine Learning ✅
 
-### Environment Setup
+### Environment
+- Python 3.11.14 with Astral UV
+- 141 packages installed
 
-| Component | Status |
-|-----------|--------|
-| Astral UV v0.9.16 | ✅ Installed |
-| Python 3.11.14 | ✅ Installed |
-| Dependencies (141 packages) | ✅ Synced |
+### Notebooks Executed
 
-### ML Notebooks Created
-
-| Notebook | Purpose | Status |
+| Notebook | Purpose | Output |
 |----------|---------|--------|
-| `01_eda.ipynb` | Exploratory Data Analysis | ✅ Created |
-| `02_forecasting.ipynb` | Sales Forecasting (RF, GB) | ✅ Created |
-| `03_segmentation.ipynb` | Customer Segmentation (K-Means) | ✅ Created |
+| 01_eda.ipynb | EDA | Charts, statistics |
+| 02_forecasting.ipynb | Sales Forecast | sales_forecast.csv |
+| 03_segmentation.ipynb | RFM + K-Means | customer_segments.csv |
 
-### Key Findings (from EDA)
+### ML Key Results
 
-| Metric | Value |
-|--------|-------|
-| Total Revenue | $141,784 |
-| Gross Margin | 66% |
-| YoY Growth 2023 | +27% |
-| YoY Growth 2024 | +27% |
-| Top Division | Chocolate (93% of revenue) |
-| Top State | California (20% of sales) |
+#### Sales Forecast (6 months)
+| Month | Forecast |
+|-------|----------|
+| Jan 2025 | $1,657 |
+| Feb 2025 | $1,242 |
+| Mar 2025 | $2,683 |
+| Apr 2025 | $2,512 |
+| May 2025 | $3,172 |
+| Jun 2025 | $2,895 |
 
-### ML Use Cases
+#### Customer Segments
+| Segment | Customers | Revenue |
+|---------|-----------|---------|
+| At Risk | 837 | $37,214 |
+| Champions | 605 | $34,088 |
+| Loyal | 1,187 | $31,684 |
+| Potential | 804 | $14,251 |
+| New | 827 | $12,610 |
+| Lost | 784 | $11,936 |
 
-#### 5.1 Sales Forecasting
-- **Models**: Random Forest, Gradient Boosting
-- **Features**: Lag variables, seasonality, moving averages
-- **Output**: `outputs/predictions/sales_forecast.csv`
-
-#### 5.2 Customer Segmentation
-- **Algorithm**: K-Means Clustering
-- **Method**: RFM Analysis (Recency, Frequency, Monetary)
-- **Segments**: Champions, Loyal, Potential, At Risk
-- **Output**: `outputs/predictions/customer_segments.csv`
+### Power BI Integration
+- ✅ `Sales_Forecast` table loaded
+- ✅ `Customer_Segments` table loaded
+- ✅ Relationship: `Candy_Sales` → `Customer_Segments`
+- ✅ 8 ML measures created
 
 ---
 
@@ -192,14 +169,15 @@ Build a comprehensive Power BI semantic model for **Candy Distributor Sales Anal
 
 ---
 
-## 📚 References
+## 📚 Model Summary
 
-- [Power BI MCP](https://github.com/PowerBI-MCP)
-- [TMDL Reference](https://learn.microsoft.com/en-us/analysis-services/tmdl/tmdl-overview)
-- [DAX Reference](https://dax.guide/)
-- [Astral UV](https://docs.astral.sh/uv/)
-- [Scikit-learn](https://scikit-learn.org/)
+| Metric | Value |
+|--------|-------|
+| Tables | 8 |
+| Relationships | 6 |
+| Measures | 29 |
+| Columns | 68 |
 
 ---
 
-*Last Updated: 2025-12-10*
+*Last Updated: 2025-12-10 06:30*
