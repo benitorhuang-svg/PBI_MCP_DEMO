@@ -1,0 +1,35 @@
+/// ML-generated sales forecast for next 6 months
+table Sales_Forecast
+
+	/// Total forecasted sales from ML model
+	measure 'Forecasted Sales' = SUM(Sales_Forecast[Forecast])
+		formatString: $#,0.00
+		displayFolder: ML Predictions
+
+	column Date
+		dataType: dateTime
+		sourceColumn: Date
+
+	column Month
+		dataType: int64
+		sourceColumn: Month
+
+	column Year
+		dataType: int64
+		sourceColumn: Year
+
+	column Forecast
+		dataType: double
+		formatString: $#,0.00
+		sourceColumn: Forecast
+
+	partition Sales_Forecast = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents("C:\Users\benit\Desktop\PBI_MCP_DEMO\ml\outputs\predictions\sales_forecast.csv"),[Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.None]),
+				    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    ChangedTypes = Table.TransformColumnTypes(PromotedHeaders,{{"Date", type date}, {"Month", Int64.Type}, {"Year", Int64.Type}, {"Forecast", type number}})
+				in
+				    ChangedTypes
+

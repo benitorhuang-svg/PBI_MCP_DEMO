@@ -1,0 +1,24 @@
+table Candy_Factories
+
+	column Factory
+		dataType: string
+		sourceColumn: Factory
+
+	column Latitude
+		dataType: double
+		sourceColumn: Latitude
+
+	column Longitude
+		dataType: double
+		sourceColumn: Longitude
+
+	partition Candy_Factories = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents("C:\\Users\\benit\\Desktop\\PBI_MCP_DEMO\\DataSource\\Candy_Factories.csv"),[Delimiter=",", Columns=3, Encoding=65001, QuoteStyle=QuoteStyle.None]),
+				    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    ChangedType = Table.TransformColumnTypes(PromotedHeaders,{{"Factory", type text}, {"Latitude", type number}, {"Longitude", type number}})
+				in
+				    ChangedType
+

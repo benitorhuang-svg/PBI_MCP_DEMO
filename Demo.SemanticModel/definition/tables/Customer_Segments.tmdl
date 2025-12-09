@@ -1,0 +1,89 @@
+/// ML-generated customer segments using RFM analysis and K-Means clustering
+table Customer_Segments
+
+	/// Count of Champion customers
+	measure 'Champion Customers' = CALCULATE(COUNTROWS(Customer_Segments), Customer_Segments[Segment] = "Champions")
+		formatString: #,0
+		displayFolder: Customer Segments
+
+	/// Count of At Risk customers
+	measure 'At Risk Customers' = CALCULATE(COUNTROWS(Customer_Segments), Customer_Segments[Segment] = "At Risk")
+		formatString: #,0
+		displayFolder: Customer Segments
+
+	/// Count of Loyal customers
+	measure 'Loyal Customers' = CALCULATE(COUNTROWS(Customer_Segments), Customer_Segments[Segment] = "Loyal Customers")
+		formatString: #,0
+		displayFolder: Customer Segments
+
+	/// Total customers in segments
+	measure 'Total Segmented Customers' = COUNTROWS(Customer_Segments)
+		formatString: #,0
+		displayFolder: Customer Segments
+
+	/// Average customer monetary value
+	measure 'Avg Customer Value' = AVERAGE(Customer_Segments[Monetary])
+		formatString: $#,0.00
+		displayFolder: Customer Segments
+
+	/// Average customer recency in days
+	measure 'Avg Customer Recency' = AVERAGE(Customer_Segments[Recency])
+		formatString: #,0
+		displayFolder: Customer Segments
+
+	/// Sales from High Value cluster
+	measure 'High Value Cluster Sales' = CALCULATE([Total Sales], Customer_Segments[Cluster_Name] = "High Value")
+		formatString: $#,0.00
+		displayFolder: Customer Segments
+
+	column 'Customer ID'
+		dataType: string
+		sourceColumn: Customer ID
+
+	column Recency
+		dataType: int64
+		sourceColumn: Recency
+
+	column Frequency
+		dataType: int64
+		sourceColumn: Frequency
+
+	column Monetary
+		dataType: double
+		formatString: $#,0.00
+		sourceColumn: Monetary
+
+	column R_Score
+		dataType: string
+		sourceColumn: R_Score
+
+	column F_Score
+		dataType: string
+		sourceColumn: F_Score
+
+	column M_Score
+		dataType: string
+		sourceColumn: M_Score
+
+	column Segment
+		dataType: string
+		sourceColumn: Segment
+
+	column Cluster
+		dataType: int64
+		sourceColumn: Cluster
+
+	column Cluster_Name
+		dataType: string
+		sourceColumn: Cluster_Name
+
+	partition Customer_Segments = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents("C:\Users\benit\Desktop\PBI_MCP_DEMO\ml\outputs\predictions\customer_segments.csv"),[Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.None]),
+				    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    ChangedTypes = Table.TransformColumnTypes(PromotedHeaders,{{"Customer ID", type text}, {"Recency", Int64.Type}, {"Frequency", Int64.Type}, {"Monetary", type number}, {"R_Score", type text}, {"F_Score", type text}, {"M_Score", type text}, {"Segment", type text}, {"Cluster", Int64.Type}, {"Cluster_Name", type text}})
+				in
+				    ChangedTypes
+

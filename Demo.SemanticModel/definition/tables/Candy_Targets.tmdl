@@ -1,0 +1,20 @@
+table Candy_Targets
+
+	column Division
+		dataType: string
+		sourceColumn: Division
+
+	column Target
+		dataType: int64
+		sourceColumn: Target
+
+	partition Candy_Targets = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents("C:\\Users\\benit\\Desktop\\PBI_MCP_DEMO\\DataSource\\Candy_Targets.csv"),[Delimiter=",", Columns=2, Encoding=65001, QuoteStyle=QuoteStyle.None]),
+				    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    ChangedType = Table.TransformColumnTypes(PromotedHeaders,{{"Division", type text}, {"Target", Int64.Type}})
+				in
+				    ChangedType
+

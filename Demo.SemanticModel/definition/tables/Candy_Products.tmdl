@@ -1,0 +1,36 @@
+table Candy_Products
+
+	column Division
+		dataType: string
+		sourceColumn: Division
+
+	column 'Product Name'
+		dataType: string
+		sourceColumn: Product Name
+
+	column Factory
+		dataType: string
+		sourceColumn: Factory
+
+	column 'Product ID'
+		dataType: string
+		sourceColumn: Product ID
+
+	column 'Unit Price'
+		dataType: double
+		sourceColumn: Unit Price
+
+	column 'Unit Cost'
+		dataType: double
+		sourceColumn: Unit Cost
+
+	partition Candy_Products = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents("C:\\Users\\benit\\Desktop\\PBI_MCP_DEMO\\DataSource\\Candy_Products.csv"),[Delimiter=",", Columns=6, Encoding=65001, QuoteStyle=QuoteStyle.None]),
+				    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    ChangedType = Table.TransformColumnTypes(PromotedHeaders,{{"Division", type text}, {"Product Name", type text}, {"Factory", type text}, {"Product ID", type text}, {"Unit Price", type number}, {"Unit Cost", type number}})
+				in
+				    ChangedType
+

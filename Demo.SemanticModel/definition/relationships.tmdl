@@ -1,0 +1,24 @@
+relationship 'Candy_Sales_Product ID_Candy_Products_Product ID'
+	fromColumn: Candy_Sales.'Product ID'
+	toColumn: Candy_Products.'Product ID'
+
+relationship Candy_Products_Factory_Candy_Factories_Factory
+	fromColumn: Candy_Products.Factory
+	toColumn: Candy_Factories.Factory
+
+relationship Candy_Sales_Division_Candy_Targets_Division
+	fromColumn: Candy_Sales.Division
+	toColumn: Candy_Targets.Division
+
+relationship 'Candy_Sales_Order Date_Date_Date'
+	fromColumn: Candy_Sales.'Order Date'
+	toColumn: Date.Date
+
+relationship 'Candy_Sales_Postal Code_Geography_zip'
+	fromColumn: Candy_Sales.'Postal Code'
+	toColumn: Geography.zip
+
+relationship 'Candy_Sales_Customer ID_Customer_Segments_Customer ID'
+	fromColumn: Candy_Sales.'Customer ID'
+	toColumn: Customer_Segments.'Customer ID'
+

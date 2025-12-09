@@ -1,0 +1,181 @@
+table Candy_Sales
+
+	/// Total Sales Amount
+	measure 'Total Sales' = SUM(Candy_Sales[Sales])
+		formatString: $#,0.00
+
+	/// Total Cost Amount
+	measure 'Total Cost' = SUM(Candy_Sales[Cost])
+		formatString: $#,0.00
+
+	/// Total Gross Profit
+	measure 'Total Gross Profit' = SUM(Candy_Sales[Gross Profit])
+		formatString: $#,0.00
+
+	/// Gross Margin Percentage
+	measure 'Gross Margin %' = DIVIDE([Total Gross Profit], [Total Sales], 0)
+		formatString: 0.0%
+
+	/// Total Units Sold
+	measure 'Total Units' = SUM(Candy_Sales[Units])
+		formatString: #,0
+
+	/// Count of Unique Orders
+	measure 'Order Count' = DISTINCTCOUNT(Candy_Sales[Order ID])
+		formatString: #,0
+
+	/// Count of Unique Customers
+	measure 'Customer Count' = DISTINCTCOUNT(Candy_Sales[Customer ID])
+		formatString: #,0
+
+	/// Average Sales per Order
+	measure 'Avg Sales per Order' = DIVIDE([Total Sales], [Order Count], 0)
+		formatString: $#,0.00
+
+	/// Target Achievement Percentage
+	measure 'Target Achievement %' = DIVIDE([Total Sales], SUM(Candy_Targets[Target]), 0)
+		formatString: 0.0%
+
+	/// Year over Year Sales Growth %
+	measure 'Sales YoY %' =
+			VAR CurrentSales = [Total Sales]
+			VAR PriorYearSales = CALCULATE([Total Sales], SAMEPERIODLASTYEAR('Date'[Date]))
+			RETURN
+			IF(ISBLANK(PriorYearSales), BLANK(), DIVIDE(CurrentSales - PriorYearSales, PriorYearSales))
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Time Intelligence
+
+	/// Month over Month Sales Growth %
+	measure 'Sales MoM %' =
+			VAR CurrentSales = [Total Sales]
+			VAR PriorMonthSales = CALCULATE([Total Sales], DATEADD('Date'[Date], -1, MONTH))
+			RETURN
+			IF(ISBLANK(PriorMonthSales), BLANK(), DIVIDE(CurrentSales - PriorMonthSales, PriorMonthSales))
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Time Intelligence
+
+	/// Year to Date Sales
+	measure 'Sales YTD' = TOTALYTD([Total Sales], 'Date'[Date])
+		formatString: $#,0.00
+		displayFolder: Time Intelligence
+
+	/// Sales in Prior Year Same Period
+	measure 'Sales Prior Year' = CALCULATE([Total Sales], SAMEPERIODLASTYEAR('Date'[Date]))
+		formatString: $#,0.00
+		displayFolder: Time Intelligence
+
+	/// Average Days from Order to Ship
+	measure 'Avg Days to Ship' = AVERAGEX(Candy_Sales, DATEDIFF(Candy_Sales[Order Date], Candy_Sales[Ship Date], DAY))
+		formatString: 0.0
+
+	/// Average Sales per Customer
+	measure 'Sales per Customer' = DIVIDE([Total Sales], [Customer Count])
+		formatString: $#,0.00
+
+	/// 3-Month Rolling Average Sales
+	measure 'Sales 3M Avg' = AVERAGEX(DATESINPERIOD('Date'[Date], MAX('Date'[Date]), -3, MONTH), [Total Sales])
+		formatString: $#,0.00
+		displayFolder: Time Intelligence
+
+	/// Profit per Unit Sold
+	measure 'Profit per Unit' = DIVIDE([Total Gross Profit], [Total Units])
+		formatString: $#,0.00
+
+	/// Revenue per Order
+	measure 'Revenue per Order' = DIVIDE([Total Sales], [Order Count])
+		formatString: $#,0.00
+
+	/// Units per Order Average
+	measure 'Units per Order' = DIVIDE([Total Units], [Order Count])
+		formatString: 0.00
+
+	/// Average Population of Customer Locations
+	measure 'Avg Location Population' = AVERAGE(Geography[population])
+		formatString: #,0
+
+	/// Distinct Products Sold
+	measure 'Products Sold' = DISTINCTCOUNT(Candy_Sales[Product ID])
+		formatString: #,0
+
+	column 'Row ID'
+		dataType: int64
+		sourceColumn: Row ID
+
+	column 'Order ID'
+		dataType: string
+		sourceColumn: Order ID
+
+	column 'Order Date'
+		dataType: dateTime
+		sourceColumn: Order Date
+
+	column 'Ship Date'
+		dataType: dateTime
+		sourceColumn: Ship Date
+
+	column 'Ship Mode'
+		dataType: string
+		sourceColumn: Ship Mode
+
+	column 'Customer ID'
+		dataType: string
+		sourceColumn: Customer ID
+
+	column Country/Region
+		dataType: string
+		sourceColumn: Country/Region
+
+	column City
+		dataType: string
+		sourceColumn: City
+
+	column State/Province
+		dataType: string
+		sourceColumn: State/Province
+
+	column 'Postal Code'
+		dataType: string
+		sourceColumn: Postal Code
+
+	column Division
+		dataType: string
+		sourceColumn: Division
+
+	column Region
+		dataType: string
+		sourceColumn: Region
+
+	column 'Product ID'
+		dataType: string
+		sourceColumn: Product ID
+
+	column 'Product Name'
+		dataType: string
+		sourceColumn: Product Name
+
+	column Sales
+		dataType: double
+		sourceColumn: Sales
+
+	column Units
+		dataType: int64
+		sourceColumn: Units
+
+	column 'Gross Profit'
+		dataType: double
+		sourceColumn: Gross Profit
+
+	column Cost
+		dataType: double
+		sourceColumn: Cost
+
+	partition Candy_Sales = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents("C:\\Users\\benit\\Desktop\\PBI_MCP_DEMO\\DataSource\\Candy_Sales.csv"),[Delimiter=",", Columns=18, Encoding=65001, QuoteStyle=QuoteStyle.None]),
+				    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    ChangedType = Table.TransformColumnTypes(PromotedHeaders,{{"Row ID", Int64.Type}, {"Order ID", type text}, {"Order Date", type date}, {"Ship Date", type date}, {"Ship Mode", type text}, {"Customer ID", type text}, {"Country/Region", type text}, {"City", type text}, {"State/Province", type text}, {"Postal Code", type text}, {"Division", type text}, {"Region", type text}, {"Product ID", type text}, {"Product Name", type text}, {"Sales", type number}, {"Units", Int64.Type}, {"Gross Profit", type number}, {"Cost", type number}})
+				in
+				    ChangedType
+

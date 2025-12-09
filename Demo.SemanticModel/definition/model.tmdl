@@ -8,3 +8,12 @@ model Demo
 
 annotation PBI_ProTooling = ["MCP-PBIModeling"]
 
+ref table Candy_Factories
+ref table Candy_Products
+ref table Candy_Targets
+ref table Candy_Sales
+ref table Geography
+ref table Date
+ref table Sales_Forecast
+ref table Customer_Segments
+
